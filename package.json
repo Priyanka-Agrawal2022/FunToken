@@ -1,0 +1,31 @@
+{
+  "name": "mptoken",
+  "version": "1.0.0",
+  "description": "To make it easy for you to get started with GitLab, here's a list of recommended next steps.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/bhavish_reddy/MPToken.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://gitlab.com/bhavish_reddy/MPToken/issues"
+  },
+  "homepage": "https://gitlab.com/bhavish_reddy/MPToken#readme",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^2.0.0",
+    "@nomiclabs/hardhat-ethers": "^2.2.1",
+    "@openzeppelin/hardhat-upgrades": "^1.22.0",
+    "ethers": "^5.7.2",
+    "hardhat": "^2.12.5"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.8.0",
+    "@openzeppelin/contracts-upgradeable": "^4.8.0",
+    "dotenv": "^16.0.3"
+  }
+}
