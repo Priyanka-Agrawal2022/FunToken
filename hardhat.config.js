@@ -7,7 +7,7 @@ module.exports = {
   solidity: "0.8.17",
   networks: {
     mumbai: {
-      url: process.env.MUMBAI_ENDPOINT,
+      url: process.env.API_URL,
       accounts: [process.env.PRIVATE_KEY],
     },
   },
