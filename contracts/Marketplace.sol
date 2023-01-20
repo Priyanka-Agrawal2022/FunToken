@@ -13,7 +13,7 @@ contract Marketplace is Ownable {
     // Address where funds are collected
     address payable public wallet;
 
-    // How many token units a gets per wei
+    // How many token units the user gets per wei
     uint256 public rate;
 
     // Amount of wei raised
@@ -169,21 +169,21 @@ contract Marketplace is Ownable {
 
     uint256 amountOfMATICToTransfer = tokenAmountToSell / rate;
     uint256 marketplaceMATICBalance = address(this).balance;
-    require(marketplaceMATICBalance >= amountOfMATICToTransfer, "Vendor has insufficient funds");
+    require(marketplaceMATICBalance >= amountOfMATICToTransfer, "Marketplace has insufficient funds");
 
     (bool sent) = token.transferFrom(msg.sender, address(this), tokenAmountToSell);
-    require(sent, "Failed to transfer tokens from user to vendor");
+    require(sent, "Failed to transfer tokens from user to Marketplace");
 
     (sent,) = msg.sender.call{value: amountOfMATICToTransfer}("");
     require(sent, "Failed to send MATIC to the user");
   }
 
   /**
-   * @dev This function allows the owner to send all the MATIC stored in the smart contract into the owner’s wallet.
+   * @dev This function allows the owner to send all the MATIC stored in the Marketplace smart contract into the owner’s wallet.
    */
   function withdraw() public onlyOwner {
     uint256 marketplaceBalance = address(this).balance;
-    require(marketplaceBalance > 0, "No MATIC present in Vendor");
+    require(marketplaceBalance > 0, "No MATIC present in Marketplace");
 
     (bool sent,) = msg.sender.call{value: address(this).balance}("");
     require(sent, "Failed to withdraw");
