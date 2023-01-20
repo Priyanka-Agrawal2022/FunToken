@@ -4,8 +4,9 @@ pragma solidity ^0.8.17;
 
 import "./MPToken.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract Marketplace {
+contract Marketplace is Ownable {
     // The token being sold
     MPToken public token;
 
@@ -19,14 +20,14 @@ contract Marketplace {
     uint256 public weiRaised;
 
     /**
-    * Event for token purchase logging
-    * @param purchaser who paid for the tokens
+    * Event for token purchase logging.
+    * @param buyer who paid for the tokens
     * @param beneficiary who got the tokens
     * @param value weis paid for purchase
     * @param tokenAmount amount of tokens purchased
     */
     event TokenPurchase(
-        address indexed purchaser,
+        address indexed buyer,
         address indexed beneficiary,
         uint256 value,
         uint256 tokenAmount
@@ -37,12 +38,12 @@ contract Marketplace {
     * @param _wallet address where collected funds will be forwarded to
     * @param _token address of token being sold
     */
-    constructor(uint256 _rate, address payable _wallet, MPToken _token) public {
+    constructor(uint256 _rate, address payable _wallet, MPToken _token) {
         require(_rate > 0);
         require(_wallet != address(0));
 
         rate = _rate;
-        wallet = _wallet;
+        wallet = _wallet;   
         token = _token;
     }
 
@@ -54,44 +55,52 @@ contract Marketplace {
     }
 
     /**
-    * @dev low level token purchase
-    * @param _beneficiary address performing the token purchase
+    * @dev receive ether function
     */
-    function buyTokens(address _beneficiary) public payable returns (uint256 tokenAmount) {
+    receive() external payable {
+        buyTokens(msg.sender);
+    }
+
+    /**
+    * @dev Low level token purchase.
+    * @param _buyer address performing the token purchase
+    * @return _tokenAmount number of tokens the user purchased
+    */
+    function buyTokens(address _buyer) public payable returns (uint256 _tokenAmount) {
         uint256 weiAmount = msg.value;
 
         // Calculate token amount to be created
         uint256 tokenAmount = _getTokenAmount(weiAmount);
 
-        _preValidatePurchase(_beneficiary, weiAmount, tokenAmount);
+        _preValidatePurchase(_buyer, weiAmount, tokenAmount);
 
         // Update state
         weiRaised += weiAmount;
 
-        _processPurchase(_beneficiary, tokenAmount);
+        _processPurchase(_buyer, tokenAmount);
 
         emit TokenPurchase(
             msg.sender,
-            _beneficiary,
+            _buyer,
             weiAmount,
             tokenAmount
         );
 
-        _updatePurchasingState(_beneficiary, weiAmount);
+        _updatePurchasingState(_buyer, weiAmount);
 
         _forwardFunds();
-        _postValidatePurchase(_beneficiary, weiAmount);
+        _postValidatePurchase(_buyer, weiAmount);
 
         return tokenAmount;
     }
 
     /**
-    * @dev validation of an incoming purchase. Use require statements to revert state when conditions are met
-    * @param _beneficiary address performing the token purchase
+    * @dev Validation of an incoming purchase. Use require statements to revert state when conditions are met.
+    * @param _buyer address performing the token purchase
     * @param _weiAmount value in wei involved in the purchase
     */
-    function _preValidatePurchase(address _beneficiary, uint256 _weiAmount, uint256 tokenAmount) internal view {
-        require(_beneficiary != address(0));
+    function _preValidatePurchase(address _buyer, uint256 _weiAmount, uint256 tokenAmount) internal view {
+        require(_buyer != address(0));
         require(_weiAmount > 0, "You need to send some MATIC to proceed");
 
         uint256 marketplaceBalance = token.balanceOf(address(this));
@@ -99,40 +108,40 @@ contract Marketplace {
     }
 
     /**
-    * @dev validation of an executed purchase. Observe state and use revert statements to undo rollback when valid conditions are not met
-    * @param _beneficiary address performing the token purchase
+    * @dev Validation of an executed purchase. Observe state and use revert statements to undo rollback when valid conditions are not met.
+    * @param _buyer address performing the token purchase
     * @param _weiAmount value in wei involved in the purchase
     */
-    function _postValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {}
+    function _postValidatePurchase(address _buyer, uint256 _weiAmount) internal {}
 
     /**
-    * @dev source os tokens. Override this method to modify the way in which the Marketplace ultimately gets and sends its tokens
-    * @param _beneficiary address performing the token purchase
+    * @dev Source of tokens. Override this method to modify the way in which the Marketplace ultimately gets and sends its tokens.
+    * @param _buyer address performing the token purchase
     * @param _tokenAmount number of tokens to be emitted
     */
-    function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
-        (bool sent) = token.transfer(_beneficiary, _tokenAmount);
+    function _deliverTokens(address _buyer, uint256 _tokenAmount) internal {
+        (bool sent) = token.transfer(_buyer, _tokenAmount);
         require(sent, "Failed to transfer tokens to user");
     }
 
     /**
-    * @dev executed when a purchase has been validated and is ready to be executed. Not necessarily emits/sends tokens
-    * @param _beneficiary address receiving the tokens
+    * @dev Executed when a purchase has been validated and is ready to be executed. Not necessarily emits/sends tokens.
+    * @param _buyer address receiving the tokens
     * @param _tokenAmount number of tokens to be purchased
     */
-    function _processPurchase(address _beneficiary, uint256 _tokenAmount) internal {
-        _deliverTokens(_beneficiary, _tokenAmount);
+    function _processPurchase(address _buyer, uint256 _tokenAmount) internal {
+        _deliverTokens(_buyer, _tokenAmount);
     }
 
     /**
-    * @dev override for extensions that require an internal state to check for validity (current user contributions, etc.) 
-    * @param _beneficiary address receiving the tokens
+    * @dev Override for extensions that require an internal state to check for validity. (current user contributions, etc.)
+    * @param _buyer address receiving the tokens
     * @param _weiAmount value in wei involved in the purchase
     */
-    function _updatePurchasingState(address _beneficiary, uint256 _weiAmount) internal {}
+    function _updatePurchasingState(address _buyer, uint256 _weiAmount) internal {}
 
     /**
-    * @dev override to extend the way in which ether is converted into tokens
+    * @dev Override to extend the way in which ether is converted into tokens.
     * @param _weiAmount value in wei to be converted into tokens
     * @return number of tokens that can be purchased with the specified _weiAmount
     */
@@ -141,9 +150,42 @@ contract Marketplace {
     }
 
     /**
-    * @dev determines how ETH is stored/forwarded on purchases
+    * @dev Determines how ETH is stored/forwarded on purchases.
     */
     function _forwardFunds() internal {
         wallet.transfer(msg.value);
     }
+
+    /**
+    * @dev Low level token selling.
+    * @param tokenAmountToSell amount of tokens the user wants to sell
+    */
+    function sellTokens(uint256 tokenAmountToSell) public {
+
+    require(tokenAmountToSell > 0, "Specify an amount of token greater than zero");
+
+    uint256 userBalance = token.balanceOf(msg.sender);
+    require(userBalance >= tokenAmountToSell, "You have insufficient tokens");
+
+    uint256 amountOfMATICToTransfer = tokenAmountToSell / rate;
+    uint256 marketplaceMATICBalance = address(this).balance;
+    require(marketplaceMATICBalance >= amountOfMATICToTransfer, "Vendor has insufficient funds");
+
+    (bool sent) = token.transferFrom(msg.sender, address(this), tokenAmountToSell);
+    require(sent, "Failed to transfer tokens from user to vendor");
+
+    (sent,) = msg.sender.call{value: amountOfMATICToTransfer}("");
+    require(sent, "Failed to send MATIC to the user");
+  }
+
+  /**
+   * @dev This function allows the owner to send all the MATIC stored in the smart contract into the owner’s wallet.
+   */
+  function withdraw() public onlyOwner {
+    uint256 marketplaceBalance = address(this).balance;
+    require(marketplaceBalance > 0, "No MATIC present in Vendor");
+
+    (bool sent,) = msg.sender.call{value: address(this).balance}("");
+    require(sent, "Failed to withdraw");
+  }
 }
