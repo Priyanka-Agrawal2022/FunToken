@@ -3,19 +3,19 @@ const hre = require("hardhat");
 async function main() {
   [owner] = await hre.ethers.getSigners();
 
-  const MPToken = await hre.ethers.getContractFactory("MPToken");
-  const mpToken = await MPToken.deploy();
+  const FunToken = await hre.ethers.getContractFactory("FunToken");
+  const funToken = await FunToken.deploy();
 
   const Marketplace = await hre.ethers.getContractFactory('Marketplace', owner);
-  const marketplace = await Marketplace.deploy(2, owner.address, mpToken.address);
+  const marketplace = await Marketplace.deploy(2, owner.address, funToken.address);
 
-  await mpToken.deployed();
+  await funToken.deployed();
   await marketplace.deployed();
 
-  await mpToken.connect(owner).mint(marketplace.address, ethers.utils.parseEther('10000'));
+  await funToken.connect(owner).mint(marketplace.address, ethers.utils.parseEther('10000'));
 
-  const ownerBalance = await mpToken.balanceOf(owner.address);
-  const totalSupply = await mpToken.totalSupply();
+  const ownerBalance = await funToken.balanceOf(owner.address);
+  const totalSupply = await funToken.totalSupply();
 
   console.log("********************************");
   console.log("Owner Address: ", owner.address);
@@ -23,7 +23,7 @@ async function main() {
   console.log("Total Supply: ", hre.ethers.utils.formatEther(totalSupply), "ETH");
   console.log("********************************");
 
-  console.log("MP Token deployed to address: ", mpToken.address);
+  console.log("FunToken deployed to address: ", funToken.address);
   console.log("Marketplace deployed to address: ", marketplace.address);
 }
 

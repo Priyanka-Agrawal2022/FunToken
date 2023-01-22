@@ -2,13 +2,13 @@
 
 pragma solidity ^0.8.17;
 
-import "./MPToken.sol";
+import "./FunToken.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Marketplace is Ownable {
     // The token being sold
-    MPToken public token;
+    FunToken public token;
 
     // Address where funds are collected
     address payable public wallet;
@@ -38,7 +38,7 @@ contract Marketplace is Ownable {
     * @param _wallet address where collected funds will be forwarded to
     * @param _token address of token being sold
     */
-    constructor(uint256 _rate, address payable _wallet, MPToken _token) {
+    constructor(uint256 _rate, address payable _wallet, FunToken _token) {
         require(_rate > 0);
         require(_wallet != address(0));
 
