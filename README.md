@@ -1,5 +1,4 @@
 # Dev Instructions
-**Note:** All scripts and smart contracts files ending with `u` or `U` indicates they are for Upgradeable smart contracts.
 ## Initialization:
 - Clone Repository
 ```shell
@@ -29,7 +28,7 @@ npx hardhat compile
 ```shell
 npx hardhat test <relative-path-to-testfile>
 //example
-npx hardhat test ./test/MPToken.js
+npx hardhat test ./test/FunToken.js
 ```
 - To run deploy scripts -
 ```shell
